@@ -14,8 +14,8 @@ uwsgi --ini wsgi.ini
 
 To check
 ```
-curl -X GET 127.0.0.1:3031/types | jq .
-curl -X GET 127.0.0.1:3031/resources | jq .
+curl -X GET 127.0.0.1:3031/api/v1/types | jq .
+curl -X GET 127.0.0.1:3031/api/v1/resources?name=test | jq .
 
-curl -X POST 127.0.0.1:3031/types -H 'Content-Type: application/json' -d '{"name":"test","max_speed":"100"}'
+curl -X POST 127.0.0.1:3031/api/v1/types -H 'Content-Type: application/json' -d '{"name":"test","max_speed":"100"}'
 ```
