@@ -1,4 +1,4 @@
-import json
+from domain.errors import ResourceHandlerError, BAD_ITEM_ERROR
 
 class ResourceType:
     id: int
@@ -6,6 +6,8 @@ class ResourceType:
     max_speed: int
 
     def __init__(self, name, max_speed, id = 0):
+        if name is None or max_speed is None or not isinstance(name, str) or not isinstance(max_speed, int):
+            raise ResourceHandlerError(BAD_ITEM_ERROR)
         self.id = id
         self.name = name
         self.max_speed = max_speed

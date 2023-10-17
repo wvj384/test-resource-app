@@ -1,11 +1,15 @@
-from domain.resource_handler import ResourceHandler, ResourceHandlerError
-from urllib.parse import parse_qs
 import json
+from domain.errors import ResourceHandlerError, BAD_ITEM_ERROR, UNKNOWN_DB_ERROR
+from domain.resource_handler import ResourceHandler
+from urllib.parse import parse_qs
+
 
 HTTP_STATUS_OK = '200 OK'
 HTTP_STATUS_BAD_REQUEST = '400 Bad Request'
 HTTP_STATUS_NOT_FOUND = '404 Not Found'
 HTTP_STATUS_INTERNAL_ERROR = '500 Internal Server Error'
+
+USER_ERROR_INVALID_ID = 'invalid id'
 
 class HttpRequest:
     method: str
@@ -59,14 +63,50 @@ class WsgiApp:
     def handle_request(self, request):
         response = HttpResponse()
         match request.method, request.path:
-            case 'GET',  '/api/v1/types':
-                return self.get_types(request, response)
             case 'POST', '/api/v1/types':
                 return self.create_type(request, response)
+            case 'PUT', '/api/v1/types':
+                return self.update_type(request, response)
+            case 'GET',  '/api/v1/types':
+                return self.get_types(request, response)
             case 'DELETE', '/api/v1/types':
                 return self.delete_types(request, response)
             case _:
                 response.status=HTTP_STATUS_NOT_FOUND
+        return response
+    
+    # Types
+    
+    def create_type(self, request, response):
+        try:
+            item = self.handler.create_type(request.body)
+            response.status = HTTP_STATUS_OK
+            response.body = item
+            return response
+        except ResourceHandlerError as e:
+            response.status = HTTP_STATUS_INTERNAL_ERROR
+            response.body = get_user_error(e)
+        return response
+    
+    def update_type(self, request, response):
+        try:
+            id = request.params.get('id', None)
+            if request.params.get('id', None) is None:
+                response.status = HTTP_STATUS_BAD_REQUEST
+                response.body = get_user_error(USER_ERROR_INVALID_ID)
+                return response
+            item = self.handler.update_type(id[0], request.body)
+            response.status = HTTP_STATUS_OK
+            response.body = item
+            return response
+        except ValueError as e:
+            print(e)
+            response.status = HTTP_STATUS_BAD_REQUEST
+            response.body = get_user_error(USER_ERROR_INVALID_ID)
+        except ResourceHandlerError as e:
+            print(e)
+            response.status = HTTP_STATUS_INTERNAL_ERROR
+            response.body = get_user_error(e)
         return response
 
     def get_types(self, request, response):
@@ -78,40 +118,38 @@ class WsgiApp:
         except ValueError as e:
             print(e)
             response.status = HTTP_STATUS_BAD_REQUEST
+            response.body = get_user_error(USER_ERROR_INVALID_ID)
         except ResourceHandlerError as e:
             print(e)
             response.status = HTTP_STATUS_INTERNAL_ERROR
-            # response.body = get_user_error(e)
-        return response
-    
-    def create_type(self, request, response):
-        try:
-            # FIXME add body validation here or maybe to handler?
-            item = self.handler.create_type(request.body)
-            response.status = HTTP_STATUS_OK
-            response.body = item
-            return response
-        except ResourceHandlerError as e:
-            print(e)
-            response.status = HTTP_STATUS_INTERNAL_ERROR
-            # response.body = get_user_error(e)
+            response.body = get_user_error(e)
         return response
     
     def delete_types(self, request, response):
         try:
             ids = [int(id) for id in request.params.get('id', [])]
+            if len(ids) == 0:
+                response.status = HTTP_STATUS_BAD_REQUEST
+                response.body = get_user_error(USER_ERROR_INVALID_ID)
+                return response
             items = self.handler.delete_types(ids)
             response.status = HTTP_STATUS_OK
             response.body = items
         except ValueError as e:
             print(e)
             response.status = HTTP_STATUS_BAD_REQUEST
+            response.body = get_user_error(USER_ERROR_INVALID_ID)
         except ResourceHandlerError as e:
             print(e)
             response.status = HTTP_STATUS_INTERNAL_ERROR
-            # response.body = get_user_error(e)
+            response.body = get_user_error(e)
         return response
+    
+    # Resources
 
-# def get_user_error(e):
-#     print("get_user_error")
-#     return {"error": e}
+
+
+    # Utils
+
+def get_user_error(e):
+    return {"error": str(e)}
