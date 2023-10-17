@@ -9,3 +9,5 @@ class ResourceHandlerError(Exception):
     
 UNKNOWN_DB_ERROR = 'unknown db error'
 BAD_ITEM_ERROR = 'bad item error'
+INVALID_TYPE_ERROR = 'invalid type_id error'
+INVALID_ID_ERROR = 'invalid id error'

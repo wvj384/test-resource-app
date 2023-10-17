@@ -18,12 +18,25 @@ uwsgi --ini wsgi.ini
 
 To check
 ```
-curl -X POST 127.0.0.1:3031/api/v1/types -H 'Content-Type: application/json' -d '{"name":"test","max_speed":"100"}' | jq .
+Types
 
-curl -X PUT 127.0.0.1:3031/api/v1/types?id=1 -H 'Content-Type: application/json' -d '{"max_speed":"80"}' | jq .
+curl -X POST 127.0.0.1:3031/api/v1/types -H 'Content-Type: application/json' -d '{"name":"test","max_speed":100}' | jq .
+
+curl -X PUT 127.0.0.1:3031/api/v1/types?id=1 -H 'Content-Type: application/json' -d '{"max_speed":80}' | jq .
 
 curl -X GET '127.0.0.1:3031/api/v1/types' | jq .
 curl -X GET '127.0.0.1:3031/api/v1/types?id=1&id=2' | jq .
 
 curl -X DELETE '127.0.0.1:3031/api/v1/types?id=1&id=2' | jq .
+
+Resources
+
+curl -X POST 127.0.0.1:3031/api/v1/resources -H 'Content-Type: application/json' -d '{"name":"test","type_id":1,"speed":100}' | jq .
+
+curl -X PUT 127.0.0.1:3031/api/v1/resources?id=1 -H 'Content-Type: application/json' -d '{"max_speed":80}' | jq .
+
+curl -X GET '127.0.0.1:3031/api/v1/resources' | jq .
+curl -X GET '127.0.0.1:3031/api/v1/resources?id=1&id=2' | jq .
+
+curl -X DELETE '127.0.0.1:3031/api/v1/resources?id=1&id=2' | jq .
 ```

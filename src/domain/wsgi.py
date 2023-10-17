@@ -1,5 +1,5 @@
 import json
-from domain.errors import ResourceHandlerError, BAD_ITEM_ERROR, UNKNOWN_DB_ERROR
+from domain.errors import ResourceHandlerError, INVALID_ID_ERROR
 from domain.resource_handler import ResourceHandler
 from urllib.parse import parse_qs
 
@@ -9,7 +9,7 @@ HTTP_STATUS_BAD_REQUEST = '400 Bad Request'
 HTTP_STATUS_NOT_FOUND = '404 Not Found'
 HTTP_STATUS_INTERNAL_ERROR = '500 Internal Server Error'
 
-USER_ERROR_INVALID_ID = 'invalid id'
+USER_ERROR_INVALID_ID = 'invalid id in qs'
 
 class HttpRequest:
     method: str
@@ -63,6 +63,7 @@ class WsgiApp:
     def handle_request(self, request):
         response = HttpResponse()
         match request.method, request.path:
+            # Types
             case 'POST', '/api/v1/types':
                 return self.create_type(request, response)
             case 'PUT', '/api/v1/types':
@@ -71,6 +72,15 @@ class WsgiApp:
                 return self.get_types(request, response)
             case 'DELETE', '/api/v1/types':
                 return self.delete_types(request, response)
+            # Resources
+            case 'POST', '/api/v1/resources':
+                return self.create_resource(request, response)
+            case 'PUT', '/api/v1/resources':
+                return self.update_resource(request, response)
+            case 'GET',  '/api/v1/resources':
+                return self.get_resources(request, response)
+            case 'DELETE', '/api/v1/resources':
+                return self.delete_resources(request, response)
             case _:
                 response.status=HTTP_STATUS_NOT_FOUND
         return response
@@ -147,7 +157,73 @@ class WsgiApp:
     
     # Resources
 
-
+    def create_resource(self, request, response):
+        try:
+            item = self.handler.create_resource(request.body)
+            response.status = HTTP_STATUS_OK
+            response.body = item
+            return response
+        except ResourceHandlerError as e:
+            response.status = HTTP_STATUS_INTERNAL_ERROR
+            response.body = get_user_error(e)
+        return response
+    
+    def update_resource(self, request, response):
+        try:
+            id = request.params.get('id', None)
+            if request.params.get('id', None) is None:
+                response.status = HTTP_STATUS_BAD_REQUEST
+                response.body = get_user_error(USER_ERROR_INVALID_ID)
+                return response
+            item = self.handler.update_resource(id[0], request.body)
+            response.status = HTTP_STATUS_OK
+            response.body = item
+            return response
+        except ValueError as e:
+            print(e)
+            response.status = HTTP_STATUS_BAD_REQUEST
+            response.body = get_user_error(USER_ERROR_INVALID_ID)
+        except ResourceHandlerError as e:
+            print(e)
+            response.status = HTTP_STATUS_INTERNAL_ERROR
+            response.body = get_user_error(e)
+        return response
+    
+    def get_resources(self, request, response):
+        try:
+            ids = [int(id) for id in request.params.get('id', [])]
+            items = self.handler.get_resources(ids)
+            response.status = HTTP_STATUS_OK
+            response.body = items
+        except ValueError as e:
+            print(e)
+            response.status = HTTP_STATUS_BAD_REQUEST
+            response.body = get_user_error(USER_ERROR_INVALID_ID)
+        except ResourceHandlerError as e:
+            print(e)
+            response.status = HTTP_STATUS_INTERNAL_ERROR
+            response.body = get_user_error(e)
+        return response
+    
+    def delete_resources(self, request, response):
+        try:
+            ids = [int(id) for id in request.params.get('id', [])]
+            if len(ids) == 0:
+                response.status = HTTP_STATUS_BAD_REQUEST
+                response.body = get_user_error(USER_ERROR_INVALID_ID)
+                return response
+            items = self.handler.delete_resources(ids)
+            response.status = HTTP_STATUS_OK
+            response.body = items
+        except ValueError as e:
+            print(e)
+            response.status = HTTP_STATUS_BAD_REQUEST
+            response.body = get_user_error(USER_ERROR_INVALID_ID)
+        except ResourceHandlerError as e:
+            print(e)
+            response.status = HTTP_STATUS_INTERNAL_ERROR
+            response.body = get_user_error(e)
+        return response
 
     # Utils
 

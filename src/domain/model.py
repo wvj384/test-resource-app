@@ -25,8 +25,18 @@ class Resource:
     name: str
     speed: int
 
-    def __init__(self, type, name, speed, id = 0):
+    def __init__(self, name, type, speed, id = 0):
+        if name is None or speed is None or not isinstance(name, str) or not isinstance(speed, int):
+            raise ResourceHandlerError(BAD_ITEM_ERROR)
         self.id = id
-        self.type = type
         self.name = name
+        self.type = type
         self.speed = speed
+
+    def output(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'type': self.type.output(),
+            'speed': self.speed
+        }
