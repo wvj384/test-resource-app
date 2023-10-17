@@ -2,8 +2,8 @@ from abc import ABC, abstractmethod
 
 from domain.model import ResourceType, Resource
 
+
 class Storage(ABC):
-    
     @abstractmethod
     def create_type(self, item: ResourceType) -> (bool, ResourceType | None):
         pass
@@ -27,9 +27,11 @@ class Storage(ABC):
     @abstractmethod
     def update_resource(self, item: Resource) -> (bool, Resource | None):
         pass
-    
+
     @abstractmethod
-    def get_resources(self, ids: [int], type_ids: [int]) -> (bool, list[Resource] | None):
+    def get_resources(
+        self, ids: [int], type_ids: [int]
+    ) -> (bool, list[Resource] | None):
         pass
 
     @abstractmethod
