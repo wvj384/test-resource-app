@@ -94,8 +94,8 @@ class ResourceHandler:
         else:
             raise ResourceHandlerError(UNKNOWN_DB_ERROR)
 
-    def get_resources(self, ids: list[int]) -> dict:
-        success, items = self.storage.get_resources(ids)
+    def get_resources(self, ids: list[int], type_ids: list[int]) -> dict:
+        success, items = self.storage.get_resources(ids, type_ids)
         if success:
             return [item.output() for item in items]
         else:

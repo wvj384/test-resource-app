@@ -9,7 +9,7 @@ CREATE TABLE resources (
   name            VARCHAR(100) NOT NULL,
   type_id         INTEGER NOT NULL,
   speed           INTEGER NOT NULL,
-  CONSTRAINT fk_type FOREIGN KEY(type_id) REFERENCES types(id)
+  CONSTRAINT fk_type FOREIGN KEY(type_id) REFERENCES types(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 INSERT INTO types (name, max_speed) VALUES ('car', 100);

@@ -29,7 +29,7 @@ class Storage(ABC):
         pass
     
     @abstractmethod
-    def get_resources(self, ids: [int]) -> (bool, list[Resource] | None):
+    def get_resources(self, ids: [int], type_ids: [int]) -> (bool, list[Resource] | None):
         pass
 
     @abstractmethod

@@ -98,14 +98,20 @@ class PostgresStorage(Storage):
             print(error)
             return False, None
         
-    def get_resources(self, ids):
+    def get_resources(self, ids, type_ids):
         result = []
         query = """
             SELECT r.id, r.name, r.speed, t.id AS type_id, t.name AS type_name, t.max_speed 
             FROM resources r INNER JOIN types t ON t.id = r.type_id
         """
-        if len(ids) > 0:
-            query += f" WHERE r.id IN ({','.join(map(str, ids))})"
+        if len(ids) > 0 or len(type_ids):
+            ids_query = None
+            types_query = None
+            if len(ids) > 0:  
+                ids_query = f" r.id IN ({','.join(map(str, ids))}) "
+            if len(type_ids) > 0:
+                types_query = f"t.id IN ({','.join(map(str, type_ids))})"
+            query += f" WHERE " + ' AND '.join(list(filter(None, [ids_query, types_query])))
         try:
             cursor = self.conn.cursor()
             cursor.execute(query)

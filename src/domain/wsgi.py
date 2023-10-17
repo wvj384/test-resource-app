@@ -191,8 +191,9 @@ class WsgiApp:
     
     def get_resources(self, request, response):
         try:
+            type_ids = [int(id) for id in request.params.get('type_id', [])]
             ids = [int(id) for id in request.params.get('id', [])]
-            items = self.handler.get_resources(ids)
+            items = self.handler.get_resources(ids, type_ids)
             response.status = HTTP_STATUS_OK
             response.body = items
         except ValueError as e:
