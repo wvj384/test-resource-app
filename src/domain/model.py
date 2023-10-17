@@ -10,6 +10,13 @@ class ResourceType:
         self.name = name
         self.max_speed = max_speed
 
+    def output(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'max_speed': self.max_speed
+        }
+
 class Resource:
     id: int
     type: ResourceType

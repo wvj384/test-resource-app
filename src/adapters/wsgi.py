@@ -1,4 +1,4 @@
-from domain.resource_handler import ResourceHandler
+from domain.resource_handler import ResourceHandler, ResourceHandlerError
 from urllib.parse import parse_qs
 import json
 
@@ -8,14 +8,14 @@ HTTP_STATUS_NOT_FOUND = '404 Not Found'
 HTTP_STATUS_INTERNAL_ERROR = '500 Internal Server Error'
 
 class HttpRequest:
-    method: str = None
-    req_type: str = None
+    method: str
+    path: str
     params: dict = {}
     body: dict = {}
 
     def __init__(self, environ):
         self.method = environ['REQUEST_METHOD']
-        self.req_type = get_type(environ['PATH_INFO'])
+        self.path = environ['PATH_INFO']
         self.params = parse_qs(environ['QUERY_STRING'])
         if environ.get('CONTENT_TYPE', None) == 'application/json':
             try:
@@ -25,11 +25,11 @@ class HttpRequest:
             body = environ['wsgi.input'].read(content_length)
             self.body = json.loads(body)
     def __repr__(self):
-        return f"<method:{self.method} uri:{self.req_type} params:{self.params} body:{self.body}>"
+        return f"<method:{self.method} path:{self.path} params:{self.params} body:{self.body}>"
 
 class HttpResponse:
-    body: list[dict] | dict = None
-    status: str = None
+    body: list[dict] | dict | None = None
+    status: str | None = None
 
     def __repr__(self):
         return f"<body:{self.body} status:{self.status}>"
@@ -43,10 +43,10 @@ class WsgiApp:
     def __call__(self, environ, start_response):
         try:
             request = HttpRequest(environ)
-            print(request)
+            print(f"request {request}")
             response = self.handle_request(request)
             start_response(response.status, [('Content-Type','application/json')])
-            print(response.body)
+            print(f"response {response}")
             if response.body is not None:
                 return [json.dumps(response.body).encode('utf8')]
             else:
@@ -58,54 +58,60 @@ class WsgiApp:
 
     def handle_request(self, request):
         response = HttpResponse()
-        if request.req_type is None:
-            response.status=HTTP_STATUS_NOT_FOUND
-        else:
-            match request.method:
-                case 'GET':
-                    return self.get_items(request, response)
-                case 'POST':
-                    return self.create_item(request, response)
-                case 'DELETE':
-                    return self.delete_item(request, response)
-                case _:
-                    response.status=HTTP_STATUS_NOT_FOUND
+        match request.method, request.path:
+            case 'GET',  '/api/v1/types':
+                return self.get_types(request, response)
+            case 'POST', '/api/v1/types':
+                return self.create_type(request, response)
+            case 'DELETE', '/api/v1/types':
+                return self.delete_types(request, response)
+            case _:
+                response.status=HTTP_STATUS_NOT_FOUND
         return response
 
-    def get_items(self, request, response):
+    def get_types(self, request, response):
         try:
             ids = [int(id) for id in request.params.get('id', [])]
-            method_name = 'get_' + request.req_type
-            func = getattr(self.handler, method_name)
-            items = func({'ids': ids})
+            items = self.handler.get_types(ids)
             response.status = HTTP_STATUS_OK
             response.body = items
-            return response
         except ValueError as e:
             print(e)
             response.status = HTTP_STATUS_BAD_REQUEST
+        except ResourceHandlerError as e:
+            print(e)
+            response.status = HTTP_STATUS_INTERNAL_ERROR
+            # response.body = get_user_error(e)
+        return response
+    
+    def create_type(self, request, response):
+        try:
+            # FIXME add body validation here or maybe to handler?
+            item = self.handler.create_type(request.body)
+            response.status = HTTP_STATUS_OK
+            response.body = item
             return response
-    
-    def create_item(self, request, response):
-        method_name = 'create_' + request.req_type
-        func = getattr(self.handler, method_name)
-        item = func(request.body)
-        response.status = HTTP_STATUS_OK
-        response.body = item
+        except ResourceHandlerError as e:
+            print(e)
+            response.status = HTTP_STATUS_INTERNAL_ERROR
+            # response.body = get_user_error(e)
         return response
     
-    def delete_item(self, request, response):
-        method_name = 'delete_' + request.req_type
-        func = getattr(self.handler, method_name)
-        func(request.params)
-        response.status = HTTP_STATUS_OK
+    def delete_types(self, request, response):
+        try:
+            ids = [int(id) for id in request.params.get('id', [])]
+            items = self.handler.delete_types(ids)
+            response.status = HTTP_STATUS_OK
+            response.body = items
+        except ValueError as e:
+            print(e)
+            response.status = HTTP_STATUS_BAD_REQUEST
+        except ResourceHandlerError as e:
+            print(e)
+            response.status = HTTP_STATUS_INTERNAL_ERROR
+            # response.body = get_user_error(e)
         return response
-    
-def get_type(path):
-    req_type = None
-    match path:
-        case '/api/v1/resources':
-            req_type = 'resource'
-        case '/api/v1/types':
-            req_type = 'type'
-    return req_type
+
+# def get_user_error(e):
+#     print("get_user_error")
+#     return {"error": e}

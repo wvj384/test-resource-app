@@ -1,6 +1,15 @@
 from ports.storage import Storage
 from domain.model import ResourceType
 
+class ResourceHandlerError(Exception):
+    type = 'unknown'
+    def __init__(self, type, *args):
+        super().__init__(args)
+        self.type = type
+
+    def __str__(self):
+        return f'{self.type}'
+
 class ResourceHandler:
     
     storage: Storage
@@ -8,42 +17,27 @@ class ResourceHandler:
     def __init__(self, storage):
         self.storage = storage
 
-    def get_type(self, params:dict) -> dict:
-        ids = params.get('ids', [])
+    def get_types(self, ids: list[int]) -> dict:
         success, items = self.storage.get_types(ids)
         if success:
-            return [item.__dict__ for item in items] # FIXME looks not good
+            return [item.output() for item in items]
         else:
-            return {'error':'db error'}
+            raise ResourceHandlerError('unknown db error')
 
-    def create_type(self, item):
+    def create_type(self, item: dict) -> dict:
         name = item.get('name', '')
         max_speed = item.get('max_speed', '')
         type = ResourceType(name, max_speed)
         success, item = self.storage.create_type(type)
-        print(success)
-        print(item.__dict__)
         if success:
-            return item.__dict__
+            return item.output()
         else:
-            return {'error':'db error'}
-
-    def update_type(self, params, object):
-        return True
+            raise ResourceHandlerError('unknown db error')
     
-    def delete_type(self, params):
-        return True
-
-    def get_resource(self, params):
-        return {"name":"resource1", "type":"type1", "speed":90}
-    
-    def create_resource(self, object):
-        return True
-
-    def update_resource(self, params, object):
-        return True
-    
-    def delete_resource(self, params):
-        return True
-    
+    def delete_types(self, ids: list[int]) -> dict:
+        success, items = self.storage.delete_types(ids)
+        if success:
+            return [item.output() for item in items]
+        else:
+            raise ResourceHandlerError('unknown db error')
     

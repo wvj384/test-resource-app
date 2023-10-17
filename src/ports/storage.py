@@ -11,3 +11,7 @@ class Storage(ABC):
     @abstractmethod
     def create_type(self, item: ResourceType) -> (bool, ResourceType | None):
         pass
+
+    @abstractmethod
+    def delete_types(self, ids: [int]) -> (bool, ResourceType | None):
+        pass

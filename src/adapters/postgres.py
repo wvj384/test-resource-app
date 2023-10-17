@@ -39,3 +39,20 @@ class PostgresStorage(Storage):
         except (Exception, psycopg2.DatabaseError) as error:
             print(error)
             return False, None
+
+    def delete_types(self, ids):
+        result = []
+        query = "SELECT * FROM types"
+        if len(ids) > 0:
+            query += f" WHERE id IN ({','.join(map(str, ids))})"
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute(f" DELETE FROM types WHERE id IN ({','.join(map(str, ids))}) RETURNING *")
+            data = cursor.fetchall()
+            self.conn.commit()
+            for (id, name, max_speed) in data:
+                result.append(ResourceType(name, max_speed, id))
+            return True, result
+        except (Exception, psycopg2.DatabaseError) as error:
+            print(error)
+            return False, None
