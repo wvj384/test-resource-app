@@ -1,5 +1,5 @@
 # pull official base image
-FROM python:3.11.4-slim-buster
+FROM python:3.11.4
 
 # set work directory
 WORKDIR /src
@@ -15,3 +15,6 @@ RUN pip install -r requirements.txt
 
 # copy project
 COPY src .
+COPY config.ini.docker ./config.ini
+
+CMD ["uwsgi", "--ini", "wsgi.ini"]
