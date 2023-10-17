@@ -75,7 +75,7 @@ class ResourceHandler:
             raise ResourceHandlerError(UNKNOWN_DB_ERROR)
 
     def update_resource(self, id: int, item: dict) -> dict:
-        success, dbitem = self.storage.get_resources([id])
+        success, dbitem = self.storage.get_resources([id], [])
         if not success:
             raise ResourceHandlerError(UNKNOWN_DB_ERROR)
         if len(dbitem) == 0:
