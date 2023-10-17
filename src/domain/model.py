@@ -38,5 +38,6 @@ class Resource:
             'id': self.id,
             'name': self.name,
             'type': self.type.output(),
-            'speed': self.speed
+            'speed': self.speed,
+            'speed_exceed_percents': (self.speed - self.type.max_speed)*100/self.type.max_speed
         }
